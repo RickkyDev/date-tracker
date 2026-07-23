@@ -1,6 +1,6 @@
 [project]
 name = "date-tracker"
-version = "1.0.0"
+version = "1.1.0"
 description = "A customizable countdown widget for Windows."
 requires-python = ">=3.12"
 dependencies = [

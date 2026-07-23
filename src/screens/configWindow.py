@@ -1,4 +1,5 @@
 from PySide6.QtCore import Qt, QDateTime, Signal
+from PySide6.QtGui import QGuiApplication
 from PySide6.QtWidgets import QCheckBox, QComboBox, QDateTimeEdit, QFrame, QHBoxLayout, QLabel, QLineEdit, QMainWindow, QPushButton, QSlider, QVBoxLayout, QWidget
 
 class ConfigWindow(QMainWindow):
@@ -50,6 +51,25 @@ class ConfigWindow(QMainWindow):
         self.positionCombobox = QComboBox()
         self.positionCombobox.addItems(["Top Left", "Top Right", "Bottom Left", "Bottom Right"])
 
+        monitorLabel = QLabel("Screen: ")
+        self.monitorCombobox = QComboBox()
+
+        for index, screen in enumerate(QGuiApplication.screens()):
+            screenName = screen.name()
+            self.monitorCombobox.addItem(f"Monitor {index + 1} - {screenName}", index)
+
+        positionLayout = QHBoxLayout()
+        positionColumnLayout = QVBoxLayout()
+        positionColumnLayout.addWidget(positionLabel)
+        positionColumnLayout.addWidget(self.positionCombobox)
+
+        monitorColumnLayout = QVBoxLayout()
+        monitorColumnLayout.addWidget(monitorLabel)
+        monitorColumnLayout.addWidget(self.monitorCombobox)
+
+        positionLayout.addLayout(positionColumnLayout)
+        positionLayout.addLayout(monitorColumnLayout)
+
         opacityLabelLayout = QHBoxLayout()
         opacityLabel = QLabel("Background opacity: ")
         self.opacityValueLabel = QLabel("80%")
@@ -83,8 +103,7 @@ class ConfigWindow(QMainWindow):
         mainLayout.addWidget(self.weeksCounterCheckbox)
         mainLayout.addWidget(self.hoursCounterCheckbox)
 
-        mainLayout.addWidget(positionLabel)
-        mainLayout.addWidget(self.positionCombobox)
+        mainLayout.addLayout(positionLayout)
 
         mainLayout.addLayout(opacityLabelLayout)
         mainLayout.addWidget(self.opacitySlider)

@@ -25,6 +25,7 @@ class AppController:
         self.configWindow.targetDateInput.dateTimeChanged.connect(self.trackerWidget.setTargetDate)
         self.configWindow.displayModeCombobox.currentTextChanged.connect(self.trackerWidget.setDisplayMode)
         self.configWindow.settingsConfirmed.connect(self.saveSettings)
+        self.configWindow.monitorCombobox.currentIndexChanged.connect(self.trackerWidget.setMonitor)
 
         self.trackerWidget.setWeeksCounterVisible(self.configWindow.weeksCounterCheckbox.isChecked())
         self.trackerWidget.setHoursCounterVisible(self.configWindow.hoursCounterCheckbox.isChecked())
@@ -32,6 +33,7 @@ class AppController:
         self.trackerWidget.setBackgroundOpacity(self.configWindow.opacitySlider.value())
         self.trackerWidget.setTargetDate(self.configWindow.targetDateInput.dateTime())
         self.trackerWidget.setDisplayMode(self.configWindow.displayModeCombobox.currentText())
+        self.trackerWidget.setMonitor(self.configWindow.monitorCombobox.currentIndex())
 
         self.trackerWidget.setTrackerTitle(self.configWindow.trackerTitleInput.text())
         self.trackerWidget.setTargetDate(self.configWindow.targetDateInput.dateTime())
@@ -105,6 +107,7 @@ class AppController:
         self.settings.setValue("showHoursCounter", self.configWindow.hoursCounterCheckbox.isChecked())
         self.settings.setValue("widgetPosition", self.configWindow.positionCombobox.currentText())
         self.settings.setValue("backgroundOpacity", self.configWindow.opacitySlider.value())
+        self.settings.setValue("monitorIndex", self.configWindow.monitorCombobox.currentIndex())
         self.settings.sync()
 
     def loadSettings(self):
@@ -115,6 +118,7 @@ class AppController:
         widgetPosition = self.settings.value("widgetPosition", "Top Left", type=str)
         backgroundOpacity = self.settings.value("backgroundOpacity", 80, type=int)
         targetDate = self.settings.value("targetDate", QDateTime.currentDateTime())
+        monitorIndex = self.settings.value("monitorIndex", 0, type=int)
 
         self.configWindow.trackerTitleInput.setText(trackerTitle)
         self.configWindow.targetDateInput.setDateTime(targetDate)
@@ -123,6 +127,10 @@ class AppController:
         self.configWindow.hoursCounterCheckbox.setChecked(showHoursCounter)
         self.configWindow.positionCombobox.setCurrentText(widgetPosition)
         self.configWindow.opacitySlider.setValue(backgroundOpacity)
+        self.configWindow.opacityValueLabel.setText(f"{backgroundOpacity}%")
+
+        if monitorIndex < self.configWindow.monitorCombobox.count():
+            self.configWindow.monitorCombobox.setCurrentIndex(monitorIndex)
 
     def exitApplication(self):
         self.trayIcon.hide()

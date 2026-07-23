@@ -10,6 +10,7 @@ class TrackerWidget(QWidget):
         self.createInterface()
 
         self.currentPosition = "Top Left"
+        self.currentMonitorIndex = 0
 
         self.targetDate = QDateTime.currentDateTime()
         self.displayMode = "Single-line"
@@ -183,19 +184,21 @@ class TrackerWidget(QWidget):
 
     def setWidgetPosition(self, position):
         self.currentPosition = position
-        screen = QGuiApplication.primaryScreen()
+        screens = QGuiApplication.screens()
 
-        if screen is None: return
+        if not screens: return
 
-        availableGeometry = screen.availableGeometry()
+        if self.currentMonitorIndex >= len(screens):
+            self.currentMonitorIndex = 0
+
+        screen = screens[self.currentMonitorIndex]
+        availableGeometry = screen.availableGeometry() # add connections
 
         margin = 20
 
         left = availableGeometry.left() + margin
         top = availableGeometry.top() + margin
-
         right = (availableGeometry.right() - self.width() - margin + 1)
-
         bottom = (availableGeometry.bottom() - self.height() - margin + 1)
 
         positions = {"Top Left": (left, top), "Top Right": (right, top), "Bottom Left": (left, bottom), "Bottom Right": (right, bottom)}
@@ -203,6 +206,10 @@ class TrackerWidget(QWidget):
         xPosition, yPosition = positions.get(position, (left, top))
 
         self.move(xPosition, yPosition)
+
+    def setMonitor(self, monitorIndex):
+        self.currentMonitorIndex = monitorIndex
+        self.setWidgetPosition(self.currentPosition)
 
     def setBackgroundOpacity(self, opacity):
         alpha = round((opacity / 100) * 255)
