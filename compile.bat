@@ -1,7 +1,5 @@
 @echo off
 
-rmdir /s /q build
-rmdir /s /q dist
 del "Date Tracker.spec"
 
 call venv\Scripts\activate.bat
