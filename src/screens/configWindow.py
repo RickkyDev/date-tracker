@@ -12,7 +12,7 @@ class ConfigWindow(QMainWindow):
 
         self.events = []
         
-        self.setWindowTitle("Date Tracker | Setup")
+        self.setWindowTitle("Date Tracker 1.2.2")
         self.resize(400, 500)
 
         self.createInterface()
@@ -21,8 +21,8 @@ class ConfigWindow(QMainWindow):
         centralWidget = QWidget()
         mainLayout = QVBoxLayout()
 
-        titleLabel = QLabel("Date Tracker - Configuration")
-        titleLabel.setStyleSheet("font-size: 22px; font-weight: bold;")
+        titleLabel = QLabel("Configuration Menu")
+        titleLabel.setStyleSheet("font-size: 22px; font-weight: bold; padding: 4px;")
 
         descriptionLabel = QLabel("Configure the appearance, layout and behavior of the app.")
 

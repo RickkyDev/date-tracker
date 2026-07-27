@@ -32,7 +32,7 @@ class TrackerWidget(QWidget):
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
 
-        self.setFixedWidth(340)
+        self.setFixedWidth(320)
         self.move(10, 10)
 
     def createInterface(self):
@@ -63,32 +63,48 @@ class TrackerWidget(QWidget):
             """
         )
 
-        self.mainCounterLabel = QLabel("2 months, 12 days, 14 hours, 54 minutes e 11 seconds")
+        self.mainCounterFrame = QFrame()
+        self.mainCounterFrame.setObjectName("mainCounterFrame")
+        self.mainCounterFrame.setStyleSheet(
+            """
+            QFrame#mainCounterFrame {
+                background-color: rgba(0, 0, 0, 70);
+                border-radius: 8px;
+            }
+            """
+        )
 
+        self.mainCounterLayout = QVBoxLayout(self.mainCounterFrame)
+        self.mainCounterLayout.setContentsMargins(6, 4, 6, 4)
+        self.mainCounterLayout.setSpacing(0)
+
+        self.mainCounterLabel = QLabel("2 months, 12 days, 14 hours, 54 minutes and 11 seconds")
         self.mainCounterLabel.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.mainCounterLabel.setWordWrap(True)
-
         self.mainCounterLabel.setStyleSheet(
             """
             QLabel {
                 color: white;
                 font-size: 22px;
                 font-weight: bold;
-                background-color: rgba(0, 0, 0, 70);
-                border-radius: 8px;
-                padding: 10px;
+                background-color: transparent;
+                padding: 4px;
             }
             """
         )
 
-        self.weeksCounterLabel = QLabel("2 weeks")
-        self.hoursCounterLabel = QLabel("360 hours")
+        self.secondaryCountersWidget = QWidget()
+        self.secondaryCountersLayout = QHBoxLayout(self.secondaryCountersWidget)
+        self.secondaryCountersLayout.setContentsMargins(0, 0, 0, 0)
+        self.secondaryCountersLayout.setSpacing(10)
 
-        secondaryLabels = [self.weeksCounterLabel, self.hoursCounterLabel]
+        self.hoursCounterLabel = QLabel("360 hours")
+        self.weeksCounterLabel = QLabel("2 weeks")
+
+        secondaryLabels = [self.hoursCounterLabel, self.weeksCounterLabel]
 
         for label in secondaryLabels:
             label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
             label.setStyleSheet(
                 """
                 QLabel {
@@ -99,6 +115,12 @@ class TrackerWidget(QWidget):
                 }
                 """
             )
+
+        self.secondaryCountersLayout.addWidget(self.hoursCounterLabel, 1)
+        self.secondaryCountersLayout.addWidget(self.weeksCounterLabel, 1)
+
+        self.mainCounterLayout.addWidget(self.mainCounterLabel)
+        self.mainCounterLayout.addWidget(self.secondaryCountersWidget)
 
         self.eventsFrame = QFrame()
         self.eventsFrame.setObjectName("eventsFrame")
@@ -116,7 +138,15 @@ class TrackerWidget(QWidget):
         self.eventsLayout.setSpacing(4)
 
         self.eventsTitleLabel = QLabel("Events until then:")
-        self.eventsTitleLabel.setStyleSheet("color: white; font-size: 13px; font-weight: bold;")
+        self.eventsTitleLabel.setStyleSheet(
+            """
+            QLabel {
+                color: white;
+                font-size: 13px;
+                font-weight: bold;
+            }
+            """
+        )
 
         self.eventsLayout.addWidget(self.eventsTitleLabel)
 
@@ -129,8 +159,23 @@ class TrackerWidget(QWidget):
             eventNameLabel = QLabel()
             eventTimeLabel = QLabel()
 
-            eventNameLabel.setStyleSheet("color: white; font-size: 12px;")
-            eventTimeLabel.setStyleSheet("color: white; font-size: 12px;")
+            eventNameLabel.setStyleSheet(
+                """
+                QLabel {
+                    color: white;
+                    font-size: 12px;
+                }
+                """
+            )
+
+            eventTimeLabel.setStyleSheet(
+                """
+                QLabel {
+                    color: white;
+                    font-size: 12px;
+                }
+                """
+            )
 
             eventNameLabel.setMinimumWidth(170)
             eventTimeLabel.setAlignment(Qt.AlignmentFlag.AlignRight)
@@ -149,17 +194,13 @@ class TrackerWidget(QWidget):
         self.eventsFrame.setVisible(False)
 
         self.mainLayout.addWidget(self.titleLabel)
-        self.mainLayout.addWidget(self.mainCounterLabel)
+        self.mainLayout.addWidget(self.mainCounterFrame)
         self.mainLayout.addWidget(self.eventsFrame)
-        self.mainLayout.addWidget(self.weeksCounterLabel)
-        self.mainLayout.addWidget(self.hoursCounterLabel)
 
-        self.adjustSize()
-
-        self.titleLabel.setFixedHeight(34)
-        self.mainCounterLabel.setFixedHeight(80)
-        self.weeksCounterLabel.setFixedHeight(30)
-        self.hoursCounterLabel.setFixedHeight(30)
+        self.titleLabel.setFixedHeight(36)
+        self.mainCounterLabel.setFixedHeight(30)
+        self.hoursCounterLabel.setFixedHeight(35)
+        self.weeksCounterLabel.setFixedHeight(35)
 
         self.adjustSize()
         self.setFixedHeight(self.sizeHint().height())
