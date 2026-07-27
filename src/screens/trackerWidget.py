@@ -1,6 +1,6 @@
 from PySide6.QtCore import QDateTime, Qt, QTimer
 from PySide6.QtGui import QGuiApplication
-from PySide6.QtWidgets import QFrame, QLabel, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QFrame, QLabel, QVBoxLayout, QHBoxLayout, QWidget
 
 class TrackerWidget(QWidget):
     def __init__(self):
@@ -8,6 +8,9 @@ class TrackerWidget(QWidget):
         
         self.configureWindow()
         self.createInterface()
+
+        self.events = []
+        self.visibleEventCount = 0
 
         self.currentPosition = "Top Left"
         self.currentMonitorIndex = 0
@@ -97,10 +100,59 @@ class TrackerWidget(QWidget):
                 """
             )
 
-            self.mainLayout.addWidget(label)
+        self.eventsFrame = QFrame()
+        self.eventsFrame.setObjectName("eventsFrame")
+        self.eventsFrame.setStyleSheet(
+            """
+            QFrame#eventsFrame {
+                background-color: rgba(0, 0, 0, 70);
+                border-radius: 8px;
+            }
+            """
+        )
 
-        self.mainLayout.insertWidget(0, self.titleLabel)
-        self.mainLayout.insertWidget(1, self.mainCounterLabel)
+        self.eventsLayout = QVBoxLayout(self.eventsFrame)
+        self.eventsLayout.setContentsMargins(10, 8, 10, 8)
+        self.eventsLayout.setSpacing(4)
+
+        self.eventsTitleLabel = QLabel("Events until then:")
+        self.eventsTitleLabel.setStyleSheet("color: white; font-size: 13px; font-weight: bold;")
+
+        self.eventsLayout.addWidget(self.eventsTitleLabel)
+
+        self.eventRows = []
+
+        for _ in range(5):
+            eventRowLayout = QHBoxLayout()
+            eventRowLayout.setContentsMargins(0, 0, 0, 0)
+
+            eventNameLabel = QLabel()
+            eventTimeLabel = QLabel()
+
+            eventNameLabel.setStyleSheet("color: white; font-size: 12px;")
+            eventTimeLabel.setStyleSheet("color: white; font-size: 12px;")
+
+            eventNameLabel.setMinimumWidth(170)
+            eventTimeLabel.setAlignment(Qt.AlignmentFlag.AlignRight)
+
+            eventRowLayout.addWidget(eventNameLabel)
+            eventRowLayout.addStretch()
+            eventRowLayout.addWidget(eventTimeLabel)
+
+            self.eventsLayout.addLayout(eventRowLayout)
+
+            self.eventRows.append({
+                "nameLabel": eventNameLabel,
+                "timeLabel": eventTimeLabel,
+            })
+
+        self.eventsFrame.setVisible(False)
+
+        self.mainLayout.addWidget(self.titleLabel)
+        self.mainLayout.addWidget(self.mainCounterLabel)
+        self.mainLayout.addWidget(self.eventsFrame)
+        self.mainLayout.addWidget(self.weeksCounterLabel)
+        self.mainLayout.addWidget(self.hoursCounterLabel)
 
         self.adjustSize()
 
@@ -153,6 +205,7 @@ class TrackerWidget(QWidget):
         self.mainCounterLabel.setText(self.formatMainCounter(days, hours, minutes, seconds))
         self.weeksCounterLabel.setText(self.formatSimpleCounter(totalWeeks, "week"))
         self.hoursCounterLabel.setText(self.formatSimpleCounter(totalHours, "hour"))
+        self.updateEventsDisplay()
 
     def formatMainCounter(self, days, hours, minutes, seconds):
         if self.displayMode == "Multi-line":
@@ -181,6 +234,52 @@ class TrackerWidget(QWidget):
             return unit
 
         return f"{unit}s"
+
+    def setEvents(self, events):
+        self.events = events
+        self.updateEventsDisplay()
+
+    def setEventsVisible(self, visible):
+        self.eventsFrame.setVisible(visible)
+        self.updateEventsDisplay()
+        self.updateWidgetSize()
+
+    def updateEventsDisplay(self):
+        currentDate = QDateTime.currentDateTime()
+
+        self.events = [event for event in self.events if event["date"] > currentDate]
+        upcomingEvents = sorted(self.events, key=lambda event: event["date"].toSecsSinceEpoch())[:5]
+
+        for index, eventRow in enumerate(self.eventRows):
+            if index < len(upcomingEvents):
+                event = upcomingEvents[index]
+                remainingSeconds = currentDate.secsTo(event["date"])
+
+                days = remainingSeconds // 86400
+                remainingSeconds %= 86400
+
+                hours = remainingSeconds // 3600
+                remainingSeconds %= 3600
+
+                minutes = remainingSeconds // 60
+
+                eventRow["nameLabel"].setText(event["name"])
+                eventRow["timeLabel"].setText(f"{days}d {hours}h {minutes}m")
+
+                eventRow["nameLabel"].show()
+                eventRow["timeLabel"].show()
+            else:
+                eventRow["nameLabel"].clear()
+                eventRow["timeLabel"].clear()
+
+                eventRow["nameLabel"].hide()
+                eventRow["timeLabel"].hide()
+
+        newVisibleEventCount = len(upcomingEvents)
+
+        if newVisibleEventCount != self.visibleEventCount:
+            self.visibleEventCount = newVisibleEventCount
+            self.updateWidgetSize()
 
     def setWidgetPosition(self, position):
         self.currentPosition = position

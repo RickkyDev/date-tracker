@@ -1,9 +1,10 @@
 from PySide6.QtGui import QAction, QIcon
-from PySide6.QtCore import QDateTime, QSettings
+from PySide6.QtCore import QDateTime, QSettings, Qt
 from PySide6.QtWidgets import QApplication, QMenu, QSystemTrayIcon
 from src.screens.configWindow import ConfigWindow
 from src.screens.trackerWidget import TrackerWidget
 from src.rsc import getResourcePath
+import json
 
 class AppController:
     def __init__(self, app: QApplication):
@@ -26,14 +27,8 @@ class AppController:
         self.configWindow.displayModeCombobox.currentTextChanged.connect(self.trackerWidget.setDisplayMode)
         self.configWindow.settingsConfirmed.connect(self.saveSettings)
         self.configWindow.monitorCombobox.currentIndexChanged.connect(self.trackerWidget.setMonitor)
-
-        self.trackerWidget.setWeeksCounterVisible(self.configWindow.weeksCounterCheckbox.isChecked())
-        self.trackerWidget.setHoursCounterVisible(self.configWindow.hoursCounterCheckbox.isChecked())
-        self.trackerWidget.setWidgetPosition(self.configWindow.positionCombobox.currentText())
-        self.trackerWidget.setBackgroundOpacity(self.configWindow.opacitySlider.value())
-        self.trackerWidget.setTargetDate(self.configWindow.targetDateInput.dateTime())
-        self.trackerWidget.setDisplayMode(self.configWindow.displayModeCombobox.currentText())
-        self.trackerWidget.setMonitor(self.configWindow.monitorCombobox.currentIndex())
+        self.configWindow.eventsChanged.connect(self.trackerWidget.setEvents)
+        self.configWindow.eventsCheckbox.toggled.connect(self.trackerWidget.setEventsVisible)
 
         self.trackerWidget.setTrackerTitle(self.configWindow.trackerTitleInput.text())
         self.trackerWidget.setTargetDate(self.configWindow.targetDateInput.dateTime())
@@ -41,7 +36,10 @@ class AppController:
         self.trackerWidget.setWeeksCounterVisible(self.configWindow.weeksCounterCheckbox.isChecked())
         self.trackerWidget.setHoursCounterVisible(self.configWindow.hoursCounterCheckbox.isChecked())
         self.trackerWidget.setWidgetPosition(self.configWindow.positionCombobox.currentText())
+        self.trackerWidget.setMonitor(self.configWindow.monitorCombobox.currentIndex())
         self.trackerWidget.setBackgroundOpacity(self.configWindow.opacitySlider.value())
+        self.trackerWidget.setEvents(self.configWindow.events)
+        self.trackerWidget.setEventsVisible(self.configWindow.eventsCheckbox.isChecked())
 
         self.trayIcon = None
         self.trayMenu = None
@@ -108,6 +106,16 @@ class AppController:
         self.settings.setValue("widgetPosition", self.configWindow.positionCombobox.currentText())
         self.settings.setValue("backgroundOpacity", self.configWindow.opacitySlider.value())
         self.settings.setValue("monitorIndex", self.configWindow.monitorCombobox.currentIndex())
+        serializedEvents = [
+            {
+                "name": event["name"],
+                "date": event["date"].toString(Qt.DateFormat.ISODate),
+            }
+            for event in self.configWindow.events
+        ]
+        self.settings.setValue("showEvents", self.configWindow.eventsCheckbox.isChecked())
+        self.settings.setValue("events", json.dumps(serializedEvents))
+
         self.settings.sync()
 
     def loadSettings(self):
@@ -115,22 +123,48 @@ class AppController:
         displayMode = self.settings.value("displayMode", "Single-line", type=str)
         showWeeksCounter = self.settings.value("showWeeksCounter", True, type=bool)
         showHoursCounter = self.settings.value("showHoursCounter", True, type=bool)
+        showEvents = self.settings.value("showEvents", False, type=bool)
         widgetPosition = self.settings.value("widgetPosition", "Top Left", type=str)
         backgroundOpacity = self.settings.value("backgroundOpacity", 80, type=int)
         targetDate = self.settings.value("targetDate", QDateTime.currentDateTime())
+        serializedEvents = self.settings.value("events", "[]", type=str)
         monitorIndex = self.settings.value("monitorIndex", 0, type=int)
+
+        try:
+            savedEvents = json.loads(serializedEvents)
+        except json.JSONDecodeError:
+            savedEvents = []
+
+        currentDate = QDateTime.currentDateTime()
+        loadedEvents = []
+
+        for event in savedEvents:
+            eventDate = QDateTime.fromString(event["date"], Qt.DateFormat.ISODate)
+
+            if eventDate.isValid() and eventDate > currentDate:
+                loadedEvents.append({
+                    "name": event["name"],
+                    "date": eventDate,
+                })
+
+        loadedEvents.sort(key=lambda event: event["date"].toSecsSinceEpoch())
+
+        self.configWindow.events = loadedEvents
 
         self.configWindow.trackerTitleInput.setText(trackerTitle)
         self.configWindow.targetDateInput.setDateTime(targetDate)
         self.configWindow.displayModeCombobox.setCurrentText(displayMode)
         self.configWindow.weeksCounterCheckbox.setChecked(showWeeksCounter)
         self.configWindow.hoursCounterCheckbox.setChecked(showHoursCounter)
+        self.configWindow.eventsCheckbox.setChecked(showEvents)
         self.configWindow.positionCombobox.setCurrentText(widgetPosition)
         self.configWindow.opacitySlider.setValue(backgroundOpacity)
         self.configWindow.opacityValueLabel.setText(f"{backgroundOpacity}%")
 
         if monitorIndex < self.configWindow.monitorCombobox.count():
             self.configWindow.monitorCombobox.setCurrentIndex(monitorIndex)
+
+        self.configWindow.refreshEventsList()
 
     def exitApplication(self):
         self.trayIcon.hide()
