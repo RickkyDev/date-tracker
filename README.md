@@ -10,133 +10,33 @@ Date Tracker stays quietly in the system tray and displays a clean desktop count
 - Windows system tray integration
 - Minimal desktop widget that stays below other applications
 - Custom tracker title
-- Four screen positions:
-  - Top Left
-  - Top Right
-  - Bottom Left
-  - Bottom Right
-- Automatically respects the Windows taskbar area
 - Adjustable background opacity
-- Optional secondary counters:
-  - Total weeks
-  - Total hours
 - Three main counter display modes:
   - Single-line
   - Multi-line
   - Compact single-line
-- Automatic widget resizing when counters are shown or hidden
-- Persistent settings saved with `QSettings`
-- Clean dark-mode icon inspired by Windows 11 Fluent Design
-- No taskbar entry while running as a widget
+- Optional secondary counters:
+  - Total weeks
+  - Total hours
+  - List of dates until the main date
+- Persistent settings saved with `QSettings` and Json (for the list of dates)
+- Clean dark-mode icon inspired by Windows 11's design
 
-## Preview
-
-The widget can display the countdown in different formats.
-
-### Single-line
-
-```text
-15 days, 9 hours, 15 minutes and 50 seconds
-```
-
-### Multi-line
-
-```text
-15 days
-9 hours
-15 minutes
-50 seconds
-```
-
-### Compact single-line
-
-```text
-15 d  9 h  15 m  50 s
-```
-
-Secondary counters can also be enabled:
-
-```text
-2 weeks
-369 hours
-```
-
-## Requirements
-
+## Requirements to run directly from your IDE:
 - Windows 11
 - Python 3.12 or newer
 - PySide6
+#### No need to install anything to run the .exe (compiled) app
 
-## Installation
+---
 
-Clone the repository:
-
-```bash
-git clone https://github.com/YOUR_USERNAME/date-tracker.git
-cd date-tracker
-```
-
-Create a virtual environment:
-
-```bash
-python -m venv venv
-```
-
-Activate it:
-
-```bat
-venv\Scripts\activate
-```
-
-Install the project:
-
-```bash
-pip install -e .
-```
-
-## Running the App
-
-```bash
-python main.py
-```
-
-While Date Tracker is running:
+## While Date Tracker is running:
 
 - The countdown widget remains visible on the desktop.
-- The application icon remains available in the system tray.
+- The application icon remains available in the system tray, no icon stays on the taskbar.
 - Clicking the tray icon opens the configuration window.
-- Closing the configuration window returns to the countdown widget.
 - Use the tray context menu to quit the application.
 
-## Building the Executable
-
-The project includes a `compile.bat` file for building a standalone Windows executable with PyInstaller.
-
-Run:
-
-```bat
-compile.bat
-```
-
-The executable will be generated inside:
-
-```text
-dist/
-```
-
-Example PyInstaller command:
-
-```bat
-pyinstaller ^
-    --noconfirm ^
-    --clean ^
-    --onefile ^
-    --windowed ^
-    --name "Date Tracker" ^
-    --icon "src\icon.ico" ^
-    --add-data "src\icon.png;src" ^
-    main.py
-```
 
 ## Project Structure
 
@@ -166,10 +66,11 @@ The application remembers:
 - Target date and time
 - Main counter display mode
 - Enabled secondary counters
-- Widget position
+- Secondary dates being tracked
+- Widget position & monitor
 - Background opacity
 
-Settings are stored through Qt's `QSettings`, so they remain available after the application is closed or updated.
+Settings are stored through Qt's `QSettings` and Json, so they remain available after the application is closed or updated.
 
 ## Technologies
 
@@ -177,27 +78,11 @@ Settings are stored through Qt's `QSettings`, so they remain available after the
 - [PySide6](https://doc.qt.io/qtforpython-6/)
 - [Qt](https://www.qt.io/)
 - [PyInstaller](https://pyinstaller.org/)
-
-## Roadmap
-
-Possible future improvements:
-
-- Multiple independent countdowns
-- Custom fonts and colors
-- Additional themes
-- Custom widget dimensions
-- Drag-and-drop positioning
-- Startup with Windows
-- Import and export of configurations
-- Notifications when a countdown reaches zero
-- Installer and automatic updates
+- [JSON](https://www.json.org/json-en.html/)
 
 ## License
 
 This project is currently provided without a defined license.
-
-Before accepting external contributions or allowing redistribution, add a license such as MIT, Apache 2.0, or GPLv3.
-
 ---
 
-Built as a learning project focused on Python, PySide6, desktop interfaces, application state, and Windows integration.
+Built as a learning project & portfolio building, focused on the use of Python, PySide6, desktop interfaces, application state, and Windows integration.
