@@ -11,7 +11,7 @@ pyinstaller ^
     --windowed ^
     --name "Date Tracker" ^
     --icon "src\icon.ico" ^
-    --add-data "src;src" ^
+    --add-data "%~dp0src;src" ^
     --distpath build\exec ^
     --workpath build ^
     --specpath build ^
