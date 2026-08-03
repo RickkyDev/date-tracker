@@ -1,7 +1,7 @@
 import sys
 from PySide6.QtWidgets import QApplication
 from PySide6.QtGui import QIcon
-from src.rsc import getResourcePath
+from src.utils import getResourcePath
 from src.appController import AppController
 
 def main():
@@ -17,5 +17,4 @@ def main():
 
     sys.exit(app.exec())
 
-if __name__ == "__main__":
-    main()
+main()

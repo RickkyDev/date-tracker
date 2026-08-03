@@ -1,7 +1,5 @@
 @echo off
 
-del "Date Tracker.spec"
-
 call venv\Scripts\activate.bat
 
 pip install pyinstaller
@@ -13,7 +11,10 @@ pyinstaller ^
     --windowed ^
     --name "Date Tracker" ^
     --icon "src\icon.ico" ^
-    --add-data "src:src" ^
+    --add-data "src;src" ^
+    --distpath build\exec ^
+    --workpath build ^
+    --specpath build ^
     main.py
 
 pause

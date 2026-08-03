@@ -1,6 +1,9 @@
-from PySide6.QtCore import Qt, QDateTime, Signal
-from PySide6.QtGui import QGuiApplication
-from PySide6.QtWidgets import QCheckBox, QComboBox, QDateTimeEdit, QFrame, QHBoxLayout, QLabel, QLineEdit, QMainWindow, QPushButton, QSlider, QVBoxLayout, QWidget, QListWidget, QToolButton, QDialog, QDialogButtonBox, QMessageBox
+from PySide6.QtCore import Qt, QDateTime, Signal, QSize
+from PySide6.QtGui import QGuiApplication, QIcon
+from PySide6.QtWidgets import QCheckBox, QComboBox, QDateTimeEdit, QFrame, QHBoxLayout, QLabel, QLineEdit, QMainWindow, QPushButton, QSlider, QVBoxLayout, QWidget, QListWidget, QToolButton, QDialog, QDialogButtonBox, QMessageBox, QFileDialog
+from src.utils import getResourcePath
+
+import json
 
 class ConfigWindow(QMainWindow):
     windowHidden = Signal()
@@ -114,6 +117,26 @@ class ConfigWindow(QMainWindow):
         closeButton = QPushButton("Done")
         closeButton.clicked.connect(self.confirmSettings)
 
+        self.exportButton = QToolButton()
+        self.exportButton.setIcon(QIcon(getResourcePath("src/export.svg")))
+        self.exportButton.setIconSize(QSize(20, 20))
+        self.exportButton.setToolTip("Export configs")
+        self.exportButton.setFixedSize(32, 32)
+        self.exportButton.clicked.connect(self.exportSettings)
+
+        self.importButton = QToolButton()
+        self.importButton.setIcon(QIcon(getResourcePath("src/import.svg")))
+        self.importButton.setIconSize(QSize(20, 20))
+        self.importButton.setToolTip("Import configs")
+        self.importButton.setFixedSize(32, 32)
+        self.importButton.clicked.connect(self.importSettings)
+
+        bottomButtonsLayout = QHBoxLayout()
+        bottomButtonsLayout.addWidget(closeButton)
+        bottomButtonsLayout.addStretch()
+        bottomButtonsLayout.addWidget(self.exportButton)
+        bottomButtonsLayout.addWidget(self.importButton)
+
 
         mainLayout.addWidget(titleLabel)
         mainLayout.addWidget(descriptionLabel)
@@ -146,7 +169,7 @@ class ConfigWindow(QMainWindow):
         mainLayout.addWidget(self.opacitySlider)
 
         mainLayout.addStretch()
-        mainLayout.addWidget(closeButton)
+        mainLayout.addLayout(bottomButtonsLayout)
 
         centralWidget.setLayout(mainLayout)
         self.setCentralWidget(centralWidget)
@@ -252,6 +275,105 @@ class ConfigWindow(QMainWindow):
 
         self.events.pop(eventIndex)
         self.refreshEventsList()
+
+    def exportSettings(self):
+        filePath, _ = QFileDialog.getSaveFileName(
+            self,
+            "Export configs",
+            "date-tracker-config.json",
+            "JSON Files (*.json)",
+        )
+
+        if not filePath:
+            return
+
+        data = {
+            "trackerTitle": self.trackerTitleInput.text(),
+            "targetDate": self.targetDateInput.dateTime().toString(Qt.DateFormat.ISODate),
+            "displayMode": self.displayModeCombobox.currentText(),
+            "showWeeksCounter": self.weeksCounterCheckbox.isChecked(),
+            "showHoursCounter": self.hoursCounterCheckbox.isChecked(),
+            "showEvents": self.eventsCheckbox.isChecked(),
+            "widgetPosition": self.positionCombobox.currentText(),
+            "monitorIndex": self.monitorCombobox.currentIndex(),
+            "backgroundOpacity": self.opacitySlider.value(),
+            "events": [
+                {
+                    "name": event["name"],
+                    "date": event["date"].toString(Qt.DateFormat.ISODate),
+                }
+                for event in self.events
+            ],
+        }
+
+        try:
+            with open(filePath, "w", encoding="utf-8") as file:
+                json.dump(data, file, indent=4)
+        except OSError as error:
+            QMessageBox.warning(self, "Export failed", f"Could not save the file:\n{error}")
+            return
+
+        QMessageBox.information(self, "Export complete", "Configs exported successfully.")
+
+    def importSettings(self):
+        filePath, _ = QFileDialog.getOpenFileName(
+            self,
+            "Import configs",
+            "",
+            "JSON Files (*.json)",
+        )
+
+        if not filePath:
+            return
+
+        try:
+            with open(filePath, "r", encoding="utf-8") as file:
+                data = json.load(file)
+        except (OSError, json.JSONDecodeError) as error:
+            QMessageBox.warning(self, "Import failed", f"Could not read the file:\n{error}")
+            return
+
+        try:
+            self.trackerTitleInput.setText(data.get("trackerTitle", ""))
+
+            targetDate = QDateTime.fromString(data.get("targetDate", ""), Qt.DateFormat.ISODate)
+            if targetDate.isValid():
+                self.targetDateInput.setDateTime(targetDate)
+
+            self.displayModeCombobox.setCurrentText(data.get("displayMode", "Single-line"))
+            self.weeksCounterCheckbox.setChecked(data.get("showWeeksCounter", True))
+            self.hoursCounterCheckbox.setChecked(data.get("showHoursCounter", True))
+            self.eventsCheckbox.setChecked(data.get("showEvents", False))
+            self.positionCombobox.setCurrentText(data.get("widgetPosition", "Top Left"))
+
+            monitorIndex = data.get("monitorIndex", 0)
+            if monitorIndex < self.monitorCombobox.count():
+                self.monitorCombobox.setCurrentIndex(monitorIndex)
+
+            self.opacitySlider.setValue(data.get("backgroundOpacity", 80))
+
+            currentDate = QDateTime.currentDateTime()
+            importedEvents = []
+
+            for event in data.get("events", []):
+                eventDate = QDateTime.fromString(event.get("date", ""), Qt.DateFormat.ISODate)
+                if eventDate.isValid() and eventDate > currentDate:
+                    importedEvents.append({
+                        "name": event.get("name", ""),
+                        "date": eventDate,
+                    })
+
+            importedEvents.sort(key=lambda event: event["date"].toSecsSinceEpoch())
+            self.events = importedEvents
+            self.refreshEventsList()
+
+        except Exception as error:
+            QMessageBox.warning(self, "Import failed", f"Invalid config file:\n{error}")
+            return
+
+        self.settingsConfirmed.emit()
+
+        QMessageBox.information(self, "Import complete", "Configs imported successfully.")
 
     def closeEvent(self, event):
         event.ignore()

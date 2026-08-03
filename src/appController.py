@@ -3,7 +3,7 @@ from PySide6.QtCore import QDateTime, QSettings, Qt
 from PySide6.QtWidgets import QApplication, QMenu, QSystemTrayIcon
 from src.screens.configWindow import ConfigWindow
 from src.screens.trackerWidget import TrackerWidget
-from src.rsc import getResourcePath
+from src.utils import getResourcePath
 import json
 
 class AppController:
